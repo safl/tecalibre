@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+        <script src="js/galleria-1.2.5.min.js"></script>
+    </head>
+    <body>
+        <div id="gallery">
+            <img src="photo1.jpg">
+            <img src="photo2.jpg">
+            <img src="photo3.jpg">
+        </div>
+        <script>
+            Galleria.loadTheme('themes/classic/galleria.classic.min.js');
+            $("#gallery").galleria({
+                width: 500,
+                height: 500
+            });
+        </script>
+    </body>
+</html>

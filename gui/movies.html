@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+<title>DMS - Streams!</title>
+<link rel="stylesheet" href="css/base.css" type="text/css" media="all" />
+    
+<script type="text/javascript" src="js/jquery.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/jquery.tmpl.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/galleria.js" charset="utf-8"></script>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+    <div class="movie">
+        <img class="backdrop" src="http://localhost:8080/media/movies/download/backdrop/${_id["$oid"]}" title="${name}" />
+        <img class="poster" src="http://localhost:8080/media/movies/download/poster/${_id["$oid"]}"/>
+        <div class="info">
+            <div class="title">${name}<div class="year">(${year})</div></div>
+            <div class="rating">${rating}</div>
+            <div class="overview">${overview}</div>
+        </div>
+        <div class="tags">
+        {{each tags}}
+            <div class="tag">${$value}</div>
+        {{/each}}            
+        </div>
+    </div>
+</script>
+
+</head> 
+<body>
+<div id="frame">
+    <div id="breadcrumbs"></div>
+    <div id="nav"></div>
+    <div id="list"></div>
+</div>
+<script>
+    
+    var movie_i = 0;
+    var movies;
+
+    function viewMovie() {
+        
+        $('#list').empty();
+        $('#movieTemplate').tmpl(movies[movie_i]).appendTo("#list");
+        
+        movie_i = (movie_i + 1) % (movies.length-1);
+        
+    }
+    
+    $.ajax({                                // Grab list of pictures from backend
+      dataType: "json",
+      url: "http://localhost:8080/media/movies/find//?sort=name:ASC",
+      jsonp: "$callback",
+      success: function (data) { movies = data; viewMovie(); }
+    });
+    
+    $('body').bind('click', function() { viewMovie(); });
+    
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+<title>DMS - Streams!</title>
+<link rel="stylesheet" href="css/base.css" type="text/css" media="all" />
+<link rel="stylesheet" href="css/video-js.css" type="text/css" media="screen" title="Video JS" charset="utf-8">
+    
+<script type="text/javascript" src="js/jquery.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/jquery.tmpl.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/galleria.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/video.js" charset="utf-8"></script>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+    <li><b>${name}</b> (${ext})</li>
+</script>
+
+</head> 
+<body> 
+
+<div id="thumb"></div>
+<div id="list"></div>
+
+<script>
+        
+    $.template(                         // Compile the markup as a named template
+        'pictureTemplate',
+        '<img src="http://localhost:8080/media/pictures/download/path/${_id["$oid"]}" title="${name}" />'
+    );
+        
+    function showPictures( data ) {     // Within the callback, use .tmpl() to render the data.
+        $.tmpl( "pictureTemplate", data ).appendTo( "#list" );
+    }
+    
+    $.ajax({                            // Grab list of pictures from backend
+      dataType: "json",
+      url: "http://localhost:8080/media/pictures/find/name/?sort=tags:ASC,name:ASC",
+      jsonp: "$callback",
+      success: showPictures
+    });
+    
+                                        // Fire up galleria!
+    //Galleria.loadTheme('themes/classic/galleria.classic.js');
+    //$("#list").galleria({
+    //    width:  $(document).width(),
+    //    height: $(document).height()
+    //});
+    // Load fullscreen theme
+    Galleria.loadTheme('themes/fullscreen/galleria.fullscreen.min.js');
+
+    // Intialize Galleria
+    $('#list').galleria();
+</script>
+
+</body> 
+</html> 
