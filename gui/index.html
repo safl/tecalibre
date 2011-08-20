@@ -1,56 +1,202 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"> 
 <head> 
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
 <title>DMS - Streams!</title>
 <link rel="stylesheet" href="css/base.css" type="text/css" media="all" />
-<link rel="stylesheet" href="css/video-js.css" type="text/css" media="screen" title="Video JS" charset="utf-8">
     
 <script type="text/javascript" src="js/jquery.js" charset="utf-8"></script>
 <script type="text/javascript" src="js/jquery.tmpl.js" charset="utf-8"></script>
-<script type="text/javascript" src="js/galleria.js" charset="utf-8"></script>
-<script type="text/javascript" src="js/video.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/jquery.touchSwipe.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/jquery.log.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/mvc.js" charset="utf-8"></script>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
-    <li><b>${name}</b> (${ext})</li>
+<script id="backdropTmpl" type="text/x-jquery-tmpl">
+    <img src="/pyremo/media/movies/download/backdrop/${_id["$oid"]}" style="display: none;"/>
+</script>
+
+<script id="posterTmpl" type="text/x-jquery-tmpl">
+    <img src="/pyremo/media/movies/download/poster/${_id["$oid"]}"/>
+</script>
+
+<script id="moviesTmpl" type="text/x-jquery-tmpl">
+    <div class="movies">
+        <div>            
+            <img class="poster" src="/pyremo/media/movies/download/poster/${data.cur_movie._id.$oid}"/>
+        </div>
+        
+        <div class="listing">
+        {{if !data.level }}
+            <ul>
+            {{each(index, movie_i) data.movies }}            
+            <li class="{{if data.cur_movie._id.$oid == movie_i._id.$oid }}marked{{/if}}">${movie_i.name}</li>
+            {{/each}}
+            </ul>
+            <div class="pagination">
+                <div class="count">${data.movie_pager.total_elements()} items</div>
+                <div class="page">Page ${data.movie_pager.cur_page()}/${data.movie_pager.total_pages()}</div>
+            </div>            
+        {{/if}}
+        
+        {{if data.level }}
+            <div class="info">
+                <div class="title">${data.cur_movie.name}</div>
+                <div class="overview"><span>${data.cur_movie.overview}</span></div>
+                <ul class="tags">
+                    {{if rating}}<li>${rdata.cur_movie.ating}</li>{{/if}}
+                    {{if year}}<li>${data.cur_movie.year}</li>{{/if}}
+                {{each data.cur_movie.tags}}
+                    <li>${$value}</li>
+                {{/each}}
+                </ul>
+            </div>
+        {{/if}}
+        </div>
+    </div>    
+</script>
+
+<script id="movieListing" type="text/x-jquery-text">
+    <div class="listing">
+        <ul>
+        {{each(index, movie_i) data.movies }}
+        
+        <li class="{{if data.cur_movie._id.$oid == movie_i._id.$oid }}marked{{/if}}">${movie_i.name}</li>
+        {{/each}}
+        </ul>
+        <div class="pagination">
+            <div class="count">${data.movies.length} items</div>
+            <div class="page">Page ?/?</div>
+        </div>
+    </div>
+</script>
+
+<script id="movieInfoTmpl" type="text/x-jquery-tmpl">
+    <div class="info">
+        <div class="title">${name}</div>
+        <div class="overview"><span>${overview}</span></div>
+        <ul class="tags">
+            {{if rating}}<li>${rating}</li>{{/if}}
+            {{if year}}<li>${year}</li>{{/if}}
+        {{each tags}}
+            <li>${$value}</li>
+        {{/each}}
+        </ul>
+    </div>
 </script>
 
 </head> 
-<body> 
-
-<div id="thumb"></div>
-<div id="list"></div>
-
+<body>
+<div id="backdrop">
+    <img src="http://www.htbackdrops.com/v2/albums/userpics/10097/Project1.jpg" />
+</div>
+<div id="frame">
+    <div id="notifcations"></div>
+    <div id="breadcrumbs"></div>
+    <div id="nav"></div>
+    <div id="aside"></div>
+    <div id="content"></div>
+</div>
 <script>
-        
-    $.template(                         // Compile the markup as a named template
-        'pictureTemplate',
-        '<img src="http://localhost:8080/media/pictures/download/path/${_id["$oid"]}" title="${name}" />'
+
+$(function () {
+    
+    var page;
+    var level   = false;
+    var mc      = mvc.controller('#content', '#moviesTmpl');
+    var movies  = mvc.dataSet(
+        "/pyremo/media/movies/find//?sort=name:ASC",
+        function(ds) {
+            page = mvc.pager(10, ds);
+            mc.assign("cur_movie", ds.getItem());
+            mc.assign("movies", page.elements());
+            mc.assign("movie_pager", page);
+            $('#backdrop').empty();
+            $('#backdropTmpl').tmpl(ds.getItem()).appendTo("#backdrop");
+            mc.render();
+            
+        }
     );
         
-    function showPictures( data ) {     // Within the callback, use .tmpl() to render the data.
-        $.tmpl( "pictureTemplate", data ).appendTo( "#list" );
-    }
     
-    $.ajax({                            // Grab list of pictures from backend
-      dataType: "json",
-      url: "http://localhost:8080/media/pictures/find/name/?sort=tags:ASC,name:ASC",
-      jsonp: "$callback",
-      success: showPictures
+    $("a").click(function() {
+        
+        var href = $(this).attr("href");        
+        $.bbq.pushState({ url: href });
+        
+        var url = $.bbq.getState("url");
+        return false;
     });
     
-                                        // Fire up galleria!
-    //Galleria.loadTheme('themes/classic/galleria.classic.js');
-    //$("#list").galleria({
-    //    width:  $(document).width(),
-    //    height: $(document).height()
-    //});
-    // Load fullscreen theme
-    Galleria.loadTheme('themes/fullscreen/galleria.fullscreen.min.js');
+    $(window).bind("hashchange", function(e) {
 
-    // Intialize Galleria
-    $('#list').galleria();
+        
+    });
+    
+	//Assign handlers to the simple direction handlers.
+    var swipeOptions = {
+        swipeLeft: function() {
+
+            movies.next();
+            mc.assign("cur_movie", movies.getItem());
+            $('#backdrop').empty();
+            $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
+            mc.render();
+        },
+        swipeRight: function() {
+
+            movies.prev();
+            mc.assign("cur_movie", movies.getItem());
+            $('#backdrop').empty();
+            $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
+            mc.render();
+        },
+        threshold: 50
+    }
+        
+    $(document).keypress(function(event) {
+        switch(event.which) {
+            
+            case 115:                
+            case 119:
+            case 105:
+                
+                if (event.which == 115) {
+                    movies.next();
+                } else if (event.which == 119) {
+                    movies.prev();
+                } else if (event.which == 105) {
+                    level = !level;
+                }
+                
+                page = mvc.pager(10, movies);
+                mc.assign("level", level);
+                mc.assign("cur_movie", movies.getItem());
+                mc.assign("movies", page.elements());
+                
+                if (event.which != 105) {                    
+                    $('#backdrop img').fadeOut('fast', function() {$(this).remove();});
+                    $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
+                    $('#backdrop img').fadeIn('slow');
+                }
+                mc.render();
+
+                break
+
+            default:
+                $.log("ignoring key event"+event.which);
+        }
+        
+    });
+    
+    //Enable swiping...
+    $("body").swipe( swipeOptions );
+    $(window).trigger("hashchange");
+    
+    // Navigation keyboard, mouse, touch. No buttons?
+    
+});
+    
 </script>
-
-</body> 
-</html> 
+</body>
+</html>

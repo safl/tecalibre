@@ -11,7 +11,7 @@
 
 
 <script id="pictureTemplate" type="text/x-jquery-tmpl">
-    <img src="http://localhost:8080/media/pictures/download/small/${_id["$oid"]}" title="${name}" width="160"/>
+    <img src="http://tecalibre:8080/media/pictures/download/small/${_id["$oid"]}" title="${name}" width="160"/>
 </script>
 
 </head>
@@ -31,7 +31,7 @@
     
     $.ajax({                            // Grab list of pictures from backend
       dataType: "json",
-      url: "http://localhost:8080/media/pictures/find/name/?sort=tags:ASC,name:ASC",
+      url: "http://tecalibre:8080/media/pictures/find/name/?sort=tags:ASC,name:ASC",
       jsonp: "$callback",
       success: showPictures
     });
