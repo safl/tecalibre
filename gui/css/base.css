@@ -13,6 +13,16 @@ body {
     height: 100%;
 }
 
+ul {
+    margin: 0;
+    padding: 0;
+}
+
+ul li {
+    margin: 0;
+    padding: 0;
+}
+
 #frame {
     /* Vertical alignment to center */
     width: 80%;
@@ -53,15 +63,15 @@ img.poster {
     width: 60%;
     min-height: 26em;
     display: inline-block;
-    position: relative;
-    
-    background-color: rgba(20, 20, 20, 0.75);
+    position: relative;    
+    background-color: rgba(20, 20, 20, 0.90);
     padding: 0;
     border-radius: 6px;
 }
 
 .listing ul {
     padding: 0;
+    margin-top: 1.2em;
     font-size: 125%;
 }
 
@@ -74,7 +84,8 @@ img.poster {
 }
 
 .pagination {
-    padding: 1em 2em 1em 2em;
+    font-size: 125%;
+    padding: 0.5em 1em 0.5em 1em;
     background-color: rgba(0,0,0,0.5);
     border-bottom-left-radius: 6px;
     border-bottom-right-radius: 6px;
@@ -98,7 +109,7 @@ img.poster {
 
 .overview {
     border-radius: 6px;
-    padding: 3px;
+    padding: 0.5em;
 }
 
 .title {
@@ -115,19 +126,31 @@ img.poster {
 }
 
 .info {
-    padding: 1em;
+    padding: 1em 1em 4em 1em;
     border-radius: 6px;
 }
 
-.tags {
+ul.genres {
+    padding: 0;
+    margin-top: 0;
+}
+
+ul.genres li {
+    padding: 0;
+    display: inline;
+    border-radius: 6px;
+    
+    font-size: 80%;
+}
+
+ul.tags {
     position: absolute;
-    bottom: 0;
+    bottom: 1em;
     padding: 0;
 }
 
-.tags li {
+ul.tags li {
     display:    inline;
-    border:     2px solid #fff;    
     padding:    3px 6px 3px 6px;
     border-radius: 6px;
     background-color: black;
@@ -139,4 +162,29 @@ img.poster {
 
 .movies li {
     list-style: none;
+}
+
+.nav {
+    overflow: hidden;
+}
+
+ul.medias {
+    width: 200em;    
+
+    overflow-x: hidden;
+    padding-top: 3em;
+    padding-bottom: 3em;
+}
+.medias li {
+    display: inline;
+    
+    font-size: 300%;
+    
+    background: rgba(20,20,20,0.50);
+    padding: 1em;
+    margin: 0 1em 0 1em;
+    border-radius: 0.25em;
+    text-align: center;
+    
+    overflow: hidden;
 }

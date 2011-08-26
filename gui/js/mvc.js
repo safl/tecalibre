@@ -144,8 +144,10 @@ var mvc = {
 
     controller: function(name, template) {
         
-        var self = this;
-        var data   = [];
+        var self    = this;
+        var data    = [];       // Data for the view
+        var ds;                 // DataSource
+        var page;               // Pagination
         
         self.assign = function(key, value) {
             data[key]= value;
@@ -155,6 +157,19 @@ var mvc = {
             $(name).empty();
             $(template).tmpl({'data': data}).appendTo(name);
         }
+        
+        //self.setup = function() {}
+        //self.beforeFilter = function() {}        
+        //self.afterFilter = function() {}
+        //self.render = function() {}
+        //self.action = function() {}
+        //
+        //self.run = function() {
+        //    self.beforeFilter();
+        //    self.action({type:null, namespace:null});
+        //    self._render();
+        //    self.afterFilter();
+        //}
         
         return self;
     

@@ -42,10 +42,16 @@
         {{if data.level }}
             <div class="info">
                 <div class="title">${data.cur_movie.name}</div>
-                <div class="overview"><span>${data.cur_movie.overview}</span></div>
+                <div class="runtime">${data.cur_movie.runtime} minutes</div>
+                <div class="overview">${data.cur_movie.overview}</div>
+                <ul class="genres">
+                    {{each data.cur_movie.genres}}
+                        <li>${$value}{{if ($index+1)< data.cur_movie.genres.length}},{{/if}}</li>
+                    {{/each}}
+                </ul>
                 <ul class="tags">
-                    {{if rating}}<li>${rdata.cur_movie.ating}</li>{{/if}}
-                    {{if year}}<li>${data.cur_movie.year}</li>{{/if}}
+                    {{if data.cur_movie.rating}}<li>${data.cur_movie.rating}</li>{{/if}}
+                    {{if data.cur_movie.year}}<li>${data.cur_movie.year}</li>{{/if}}
                 {{each data.cur_movie.tags}}
                     <li>${$value}</li>
                 {{/each}}
@@ -85,13 +91,23 @@
     </div>
 </script>
 
+<script id="navItemTmpl" type="text/x-jquery-tmpl">
+    <div class="nav">
+        <ul class="medias">
+        {{each(index, navItem) data.navItems }}
+        <li class="{{if data.curNavItem.name == navItem.name }}marked{{/if}}">${navItem.name}</li>
+        {{/each}}
+        </ul>
+    </div>
+</script>
+
 </head> 
 <body>
 <div id="backdrop">
-    <img src="http://www.htbackdrops.com/v2/albums/userpics/10097/Project1.jpg" />
+    <img src="/img/backdrop_tv.jpg" />
 </div>
 <div id="frame">
-    <div id="notifcations"></div>
+    <div id="notifications"></div>
     <div id="breadcrumbs"></div>
     <div id="nav"></div>
     <div id="aside"></div>
@@ -101,102 +117,104 @@
 
 $(function () {
     
-    var page;
-    var level   = false;
+    
     var mc      = mvc.controller('#content', '#moviesTmpl');
-    var movies  = mvc.dataSet(
-        "/pyremo/media/movies/find//?sort=name:ASC",
-        function(ds) {
-            page = mvc.pager(10, ds);
-            mc.assign("cur_movie", ds.getItem());
-            mc.assign("movies", page.elements());
-            mc.assign("movie_pager", page);
-            $('#backdrop').empty();
-            $('#backdropTmpl').tmpl(ds.getItem()).appendTo("#backdrop");
-            mc.render();
-            
+    
+    mc.level    = false;    
+    mc.action = function(e) {
+        
+        var page = mvc.pager(13, mc.movies);
+        if ((e.type =='input') && (e.namespace == 'down')) {
+            mc.movies.next();
         }
-    );
+        if ((e.type =='input') && (e.namespace == 'up')) {
+            mc.movies.prev();
+        }
+        if ((e.type =='input') && (e.namespace == 'i')) {
+            mc.level = !mc.level;
+        }
         
-    
-    $("a").click(function() {
+        if (e.namespace != 'i') {                           // Assign backdrop
+            $('#backdrop img').fadeOut('slow', function() {$(this).remove();});
+            $('#backdropTmpl').tmpl(mc.movies.getItem()).appendTo("#backdrop");
+            $('#backdrop img').fadeIn('fast');
+        }
         
-        var href = $(this).attr("href");        
-        $.bbq.pushState({ url: href });
-        
-        var url = $.bbq.getState("url");
-        return false;
-    });
-    
-    $(window).bind("hashchange", function(e) {
+        mc.assign("level",          mc.level);
+        mc.assign("cur_movie",      mc.movies.getItem());
+        mc.assign("movies",         page.elements());
+        mc.assign("movie_pager",    page);
+        mc.render();
 
-        
-    });
-    
-	//Assign handlers to the simple direction handlers.
-    var swipeOptions = {
-        swipeLeft: function() {
-
-            movies.next();
-            mc.assign("cur_movie", movies.getItem());
-            $('#backdrop').empty();
-            $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
-            mc.render();
-        },
-        swipeRight: function() {
-
-            movies.prev();
-            mc.assign("cur_movie", movies.getItem());
-            $('#backdrop').empty();
-            $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
-            mc.render();
-        },
-        threshold: 50
     }
-        
-    $(document).keypress(function(event) {
+    mc.movies   = mvc.dataSet(
+        "/pyremo/media/movies/find//?sort=name:ASC",
+        function(ds) { mc.action('data.ready');  }
+    );
+    
+    // Controllers bind / unbind these
+    $(document).bind('input.left',  mc.action);
+    $(document).bind('input.right', mc.action);
+    $(document).bind('input.up',    mc.action);
+    $(document).bind('input.down',  mc.action);
+    $(document).bind('input.i',     mc.action);
+    
+    /*
+    var navItems = [
+        {name: "TV Shows"},
+        {name: "Movies"},
+        {name: "Pictures"},
+    ];
+    $('#navItemTmpl').tmpl( {data: {navItems:navItems, curNavItem:navItems[0]}} ).appendTo("#content");*/
+    
+    /**
+     *  "Normalization" / mapping of input-events.
+     *
+     */                                                
+    $(document).keypress(function(event) {          // Keyboard
+        var e;
         switch(event.which) {
             
-            case 115:                
+            case 97:
+                e = 'left';
+                break;
+            
+            case 100:
+                e = 'right';
+                break;
+            
             case 119:
+                e = 'up';
+                break;
+            
+            case 115:
+                e = 'down';
+                break;
+            
             case 105:
-                
-                if (event.which == 115) {
-                    movies.next();
-                } else if (event.which == 119) {
-                    movies.prev();
-                } else if (event.which == 105) {
-                    level = !level;
-                }
-                
-                page = mvc.pager(10, movies);
-                mc.assign("level", level);
-                mc.assign("cur_movie", movies.getItem());
-                mc.assign("movies", page.elements());
-                
-                if (event.which != 105) {                    
-                    $('#backdrop img').fadeOut('fast', function() {$(this).remove();});
-                    $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
-                    $('#backdrop img').fadeIn('slow');
-                }
-                mc.render();
-
-                break
+                e = 'i';
+                break;
 
             default:
-                $.log("ignoring key event"+event.which);
+                $.log("Unhandled keypress event"+event.which);
         }
+        if (e) {
+            $.log("Triggering: "+e);
+            $(document).trigger('input.'+e);
+        }
+    });
+
+    $(document).swipe({                                 // Swipe gestures
+        
+        swipeLeft:  function() {    $(document).trigger('input.right')  },
+        swipeRight: function() {    $(document).trigger('input.left')   },
+        threshold: 50
         
     });
-    
-    //Enable swiping...
-    $("body").swipe( swipeOptions );
-    $(window).trigger("hashchange");
-    
-    // Navigation keyboard, mouse, touch. No buttons?
     
 });
     
 </script>
 </body>
 </html>
+

@@ -27,6 +27,7 @@ for movie in coll.find():
         res = tmdb.search(movie['name'], movie['year'])
 
         ctx     = res[0] if len(res) >= 1 else None
+        info    = tmdb.getInfo(ctx['id']) if ctx else None
         pt_url  = ctx['posters'][0]['image']['url'] if ctx and len(ctx['posters']) >= 1 else None
         bd_url  = ctx['backdrops'][0]['image']['url'] if ctx and len(ctx['backdrops']) >= 1 else None
         
@@ -57,5 +58,8 @@ for movie in coll.find():
             movie['rating']         = ctx['rating'] # Update document
             movie['certification']  = ctx['certification']
             movie['overview']       = ctx['overview']
+            movie['tagline']        = info['tagline']
+            movie['runtime']        = info['runtime']
+            movie['genres']         = [item['name'] for item in info['genres']]
             
             coll.save(movie)                # Store updates

@@ -22,4 +22,16 @@ def search(name, year=None):
     )
     return loads(jsn.read())
 
-r = search("The Terminator", 1984)
+def getInfo(tmdb_id):
+    jsn = urlopen(
+        "http://api.themoviedb.org/2.1/Movie.getInfo/en/json/%s/%d" % (
+            conf['apikey'],
+            int(tmdb_id)
+        )
+    )
+    return loads(jsn.read())[0]
+
+if __name__ == "__main__":
+    r = search("The Terminator", 1984)
+    i = getInfo(r[0]['id'])
+    print [item['name'] for item in i['genres']]
