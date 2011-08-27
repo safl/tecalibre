@@ -3,6 +3,8 @@
 <head> 
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
 <title>DMS - Streams!</title>
+
+<link rel="stylesheet" href="css/reset.css" type="text/css" media="all" />
 <link rel="stylesheet" href="css/base.css" type="text/css" media="all" />
     
 <script type="text/javascript" src="js/jquery.js" charset="utf-8"></script>
@@ -10,6 +12,7 @@
 <script type="text/javascript" src="js/jquery.ba-bbq.js" charset="utf-8"></script>
 <script type="text/javascript" src="js/jquery.touchSwipe.js" charset="utf-8"></script>
 <script type="text/javascript" src="js/jquery.log.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/Namespace.js" charset="utf-8"></script>
 <script type="text/javascript" src="js/mvc.js" charset="utf-8"></script>
 
 <script id="backdropTmpl" type="text/x-jquery-tmpl">
@@ -59,7 +62,7 @@
             </div>
         {{/if}}
         </div>
-    </div>    
+    </div>
 </script>
 
 <script id="movieListing" type="text/x-jquery-text">
@@ -95,14 +98,14 @@
     <div class="nav">
         <ul class="medias">
         {{each(index, navItem) data.navItems }}
-        <li class="{{if data.curNavItem.name == navItem.name }}marked{{/if}}">${navItem.name}</li>
+        <li class="{{if data.curNavItem.name == navItem.name }}marked{{/if}}"><a href="#${navItem.section}">${navItem.name}</a></li>
         {{/each}}
         </ul>
     </div>
 </script>
 
 </head> 
-<body>
+<body id="root">
 <div id="backdrop">
     <img src="/img/backdrop_tv.jpg" />
 </div>
@@ -117,55 +120,80 @@
 
 $(function () {
     
+    function moviesController(parent, tmpl) {
+        
+        var view    =  mvc.view('#content', '#moviesTmpl');
+        
+        var movies;
+        var level = false;
+        
+        function action(e) {
+            
+            var page = mvc.pager(13, movies);
+            
+            if ((e.type =='input') && (e.namespace == 'down')) {
+                movies.next();
+            }
+            if ((e.type =='input') && (e.namespace == 'up')) {
+                movies.prev();
+            }
+            if ((e.type =='input') && (e.namespace == 'i')) {
+                level = !level;
+            }
+            
+            if (e.namespace != 'i') {                           // Assign backdrop
+                $('#backdrop img').fadeOut('slow', function() {$(this).remove();});
+                $('#backdropTmpl').tmpl(movies.getItem()).appendTo("#backdrop");
+                $('#backdrop img').fadeIn('fast');
+            }
+            
+            view.assign("level",          level);
+            view.assign("cur_movie",      movies.getItem());
+            view.assign("movies",         page.elements());
+            view.assign("movie_pager",    page);
+            view.render();
     
-    var mc      = mvc.controller('#content', '#moviesTmpl');
+        }
+        movies   = mvc.dataSet(
+            "/pyremo/media/movies/find//?sort=name:ASC",
+            function(ds) { action('data.ready');  }
+        );
+        
+        $(document).bind('input.left',  action);
+        $(document).bind('input.right', action);
+        $(document).bind('input.up',    action);
+        $(document).bind('input.down',  action);
+        $(document).bind('input.i',     action);
     
-    mc.level    = false;    
-    mc.action = function(e) {
-        
-        var page = mvc.pager(13, mc.movies);
-        if ((e.type =='input') && (e.namespace == 'down')) {
-            mc.movies.next();
-        }
-        if ((e.type =='input') && (e.namespace == 'up')) {
-            mc.movies.prev();
-        }
-        if ((e.type =='input') && (e.namespace == 'i')) {
-            mc.level = !mc.level;
-        }
-        
-        if (e.namespace != 'i') {                           // Assign backdrop
-            $('#backdrop img').fadeOut('slow', function() {$(this).remove();});
-            $('#backdropTmpl').tmpl(mc.movies.getItem()).appendTo("#backdrop");
-            $('#backdrop img').fadeIn('fast');
-        }
-        
-        mc.assign("level",          mc.level);
-        mc.assign("cur_movie",      mc.movies.getItem());
-        mc.assign("movies",         page.elements());
-        mc.assign("movie_pager",    page);
-        mc.render();
-
     }
-    mc.movies   = mvc.dataSet(
-        "/pyremo/media/movies/find//?sort=name:ASC",
-        function(ds) { mc.action('data.ready');  }
-    );
     
-    // Controllers bind / unbind these
-    $(document).bind('input.left',  mc.action);
-    $(document).bind('input.right', mc.action);
-    $(document).bind('input.up',    mc.action);
-    $(document).bind('input.down',  mc.action);
-    $(document).bind('input.i',     mc.action);
+    function rootController(parent, tmpl) {
+        
+        var view        =  mvc.view(parent, tmpl);        
+        var sections  = [
+            {name: "TV Shows", section:"tv"},
+            {name: "Movies", section:"movies"},
+            {name: "Pictures", section:"pictures"},
+        ];
+        
+        
+        $('#backdrop img').fadeOut('slow', function() {$(this).remove();});
+        var bd = $('<img src="/img/backdrop_tv.jpg" style="display: hidden;"/>');
+        $('#backdrop').html(bd);
+        $('#backdrop img').fadeIn('fast');
+        view.assign('curNavItem', sections[0]);
+        view.assign('navItems', sections);
+        view.render();
+        
+        /*
+        $(document).bind('input.left',  action);
+        $(document).bind('input.right', action);
+        $(document).bind('input.up',    action);
+        $(document).bind('input.down',  action);
+        $(document).bind('input.i',     action);
+        */
     
-    /*
-    var navItems = [
-        {name: "TV Shows"},
-        {name: "Movies"},
-        {name: "Pictures"},
-    ];
-    $('#navItemTmpl').tmpl( {data: {navItems:navItems, curNavItem:navItems[0]}} ).appendTo("#content");*/
+    }
     
     /**
      *  "Normalization" / mapping of input-events.
@@ -206,11 +234,51 @@ $(function () {
 
     $(document).swipe({                                 // Swipe gestures
         
-        swipeLeft:  function() {    $(document).trigger('input.right')  },
-        swipeRight: function() {    $(document).trigger('input.left')   },
+        swipeLeft:  function() {    $(document).trigger('input.down');  },
+        swipeRight: function() {    $(document).trigger('input.up');   },
         threshold: 50
         
     });
+    
+    // Override the default behavior of all `a` elements so that, when
+    // clicked, their `href` value is pushed onto the history hash
+    // instead of being navigated to directly.
+    $("a").click(function(){
+      var href = $(this).attr( "href" );
+    
+      // Push this URL "state" onto the history hash.
+      $.bbq.pushState({ url: href });
+    
+      // Prevent the default click behavior.
+      return false;
+    });
+    
+    // Bind a callback that executes when document.location.hash changes.
+    $(window).bind( "hashchange", function(e) {
+        
+        switch(e.fragment) {
+            case 'movies':
+                controller = moviesController('#content', '#moviesTmpl');
+                break;
+            
+            case 'tv':
+                $.log('No tv-controller...');
+            
+            case 'pictures':
+                $.log('No pictures-controller...');
+            
+            default:
+                controller = rootController('#content', '#navItemTmpl');
+                break;
+        };
+      
+        // You probably want to actually do something useful here..
+    });
+    
+    // Since the event is only triggered when the hash changes, we need
+    // to trigger the event now, to handle the hash the page may have
+    // loaded with.
+    $(window).trigger( "hashchange" );
     
 });
     

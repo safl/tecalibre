@@ -1,27 +1,25 @@
-var mvc = {
-    pager: function(perPage, data) {
-        
-        var self = this;
-        
+var mvc = new function() {
+
+    this.pager = function(perPage, data) {
+            
+        var self = new Object();
+            
         self.cur_page = function() {
             return Math.ceil( (data.cur()+1) / perPage);
         }
-        
+            
         self.total_pages = function() {
             return Math.ceil(data.length / perPage);
         }
-        
+            
         self.total_elements = function() {
             return data.length;
         }
-        
-        self.elements = function() {
             
+        self.elements = function() {
+                
             var offset = (self.cur_page()-1)*perPage;
             
-            $.log('Elements cur_page '+self.cur_page());
-            $.log('Elements perpage '+perPage);
-            $.log('Elements from index ['+offset+'] to ['+(offset+(perPage-1))+']');
             var ee = new Array();
             for(var i=offset; i<=offset+(perPage-1); i++) {
                 $.log('Elements!!');
@@ -31,21 +29,20 @@ var mvc = {
                     break;
                 }
             }
-
+    
             return ee;
         }
         
         return self;
+    };
+
+    this.dataSet = function(url, callback) {
         
-    },
-    
-    dataSet: function(url, callback) {
-    
         var i       = 0;
         var next    = 0;
         var prev    = 0;
         var data    = new Array();        
-        var self    = this;
+        var self    = new Object();
         
         var cb = callback;
         
@@ -107,9 +104,9 @@ var mvc = {
         
         return self;
         
-    },
-
-    dataSource: function(database, collection) {
+    };
+    
+    this.dataSource = function(database, collection) {
     
         var dsPrefix = '/pyremo';
     
@@ -117,7 +114,7 @@ var mvc = {
         var coll    = (collection) ? collection : 'movies';        
         var q_str   = dsPrefix+"/"+db+"/"+coll;
         
-        var self = this;
+        var self = new Object;
         
         self.query = function( q ) {
             return dataSet( (q) ? q_str + q : q_str );
@@ -140,39 +137,25 @@ var mvc = {
         }
         
         return self;
-    },
-
-    controller: function(name, template) {
+    };
+    
+    this.view = function(parent, template) {
         
-        var self    = this;
-        var data    = [];       // Data for the view
-        var ds;                 // DataSource
-        var page;               // Pagination
+        var self    = new Object();
+        
+        self.data    = [];       // Data for the view
         
         self.assign = function(key, value) {
-            data[key]= value;
+            self.data[key]= value;
         }
         
         self.render = function() {
-            $(name).empty();
-            $(template).tmpl({'data': data}).appendTo(name);
+            $(parent).empty();            
+            $(template).tmpl({'data': self.data}).appendTo(parent);
         }
-        
-        //self.setup = function() {}
-        //self.beforeFilter = function() {}        
-        //self.afterFilter = function() {}
-        //self.render = function() {}
-        //self.action = function() {}
-        //
-        //self.run = function() {
-        //    self.beforeFilter();
-        //    self.action({type:null, namespace:null});
-        //    self._render();
-        //    self.afterFilter();
-        //}
         
         return self;
     
-    }
-
-}
+    };
+    
+};
